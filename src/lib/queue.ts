@@ -35,11 +35,18 @@ const getRedisConnection = () => {
       enableReadyCheck: false,
     });
   }
-  return new Redis(redisConfig);
+
+  // Only connect to localhost if explicitly configured
+  if (process.env.REDIS_HOST || process.env.REDIS_PORT) {
+    return new Redis(redisConfig);
+  }
+
+  // No Redis configured - throw error to prevent silent failures
+  throw new Error('Redis not configured. Set REDIS_URL or REDIS_HOST/REDIS_PORT environment variables.');
 };
 
-// Default queue options with retry logic
-const defaultQueueOptions: QueueOptions = {
+// Default queue options with retry logic (without connection - added lazily)
+const getDefaultQueueOptions = (): QueueOptions => ({
   connection: getRedisConnection(),
   defaultJobOptions: {
     attempts: 3,               // Retry failed jobs 3 times
@@ -56,7 +63,7 @@ const defaultQueueOptions: QueueOptions = {
       count: 5000,             // Keep max 5000 failed jobs
     },
   },
-};
+});
 
 // Default worker options
 const defaultWorkerOptions: Omit<WorkerOptions, 'connection'> = {
@@ -88,7 +95,7 @@ export function createQueue(
   }
 
   const queue = new Queue(name, {
-    ...defaultQueueOptions,
+    ...getDefaultQueueOptions(),
     ...options,
   });
 
