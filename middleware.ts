@@ -13,20 +13,23 @@ export default auth((req) => {
   const isAuthenticated = !!req.auth;
 
   // Define public routes (no authentication required)
-  const publicRoutes = ['/', '/auth/signin', '/auth/error', '/api/auth'];
+  // Note: Root path "/" is handled by page.tsx which checks auth and redirects appropriately
+  const publicRoutes = ['/auth/signin', '/auth/error', '/api/auth'];
 
   // In development, allow access to all pages for easier testing
-  // Remove this check when you have OAuth credentials configured
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  // Check if the current path is public
+  // Check if the current path is public or is the root path
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
   );
 
-  // If route is not public and user is not authenticated, redirect to signin
+  // Root path is handled by page.tsx, so we allow it through middleware
+  const isRootPath = pathname === '/';
+
+  // If route is not public, not root, and user is not authenticated, redirect to signin
   // Skip auth check in development mode
-  if (!isPublicRoute && !isAuthenticated && !isDevelopment) {
+  if (!isPublicRoute && !isRootPath && !isAuthenticated && !isDevelopment) {
     const signInUrl = new URL('/auth/signin', req.url);
     signInUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(signInUrl);
