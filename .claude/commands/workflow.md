@@ -26,21 +26,33 @@ description: Generate and execute a custom workflow from natural language descri
 
 ## Workflow JSON Structure
 
+**CRITICAL: `trigger` MUST be at TOP LEVEL, NOT inside `config`!**
+
 ```json
 {
   "version": "1.0",
   "name": "Workflow Name",
   "description": "What it does",
-  "trigger": {
+  "trigger": {                          // ⚠️ TOP LEVEL - OUTSIDE config!
     "type": "manual" | "chat" | "webhook" | "cron" | "telegram" | "discord",
-    "config": {}  // cron: { schedule: "0 9 * * *" }, telegram/discord: { command: "/cmd" }
+    "config": {
+      // For chat: MUST include inputVariable
+      "inputVariable": "userMessage",   // ⚠️ REQUIRED for chat triggers!
+      "description": "User-facing description"
+    }
   },
-  "config": {
+  "config": {                          // ⚠️ trigger is NOT here!
     "steps": [
       {
         "id": "step1",
         "module": "category.module.function",  // lowercase: ai.ai-sdk.chat
-        "inputs": { "param": "value" },
+        "inputs": {
+          // For chat workflows, use messages array format:
+          "messages": [
+            { "role": "system", "content": "System prompt" },
+            { "role": "user", "content": "{{trigger.userMessage}}" }
+          ]
+        },
         "outputAs": "varName"  // optional
       }
     ],
@@ -59,10 +71,65 @@ description: Generate and execute a custom workflow from natural language descri
 ```
 
 **Critical:**
+- **`trigger` is TOP LEVEL** - Same level as `config`, NOT inside it!
 - Module paths: `category.module.function` (all lowercase)
 - Variable refs: `{{varName}}`, `{{data.items[0].title}}`
 - `version` required (use "1.0")
-- `trigger` defaults to "manual" if omitted - **ALWAYS INCLUDE IT IF USER MENTIONS TRIGGER TYPE**
+- **`trigger` is REQUIRED** - Infer from user request:
+  - "chat agent", "chatbot", "conversation" → `{ type: "chat", config: { inputVariable: "userMessage" } }`
+  - "schedule", "daily", "every hour" → `{ type: "cron", config: { schedule: "0 9 * * *" } }`
+  - "webhook", "API endpoint" → `{ type: "webhook", config: {} }`
+  - "telegram bot" → `{ type: "telegram", config: { botToken: "", commands: ["/start"] } }`
+  - "discord bot" → `{ type: "discord", config: { botToken: "", applicationId: "" } }`
+  - Default (no trigger mentioned) → `{ type: "manual", config: {} }`
+
+## Chat Trigger Format (IMPORTANT!)
+
+For chat-based workflows, use this EXACT structure:
+
+```json
+{
+  "trigger": {
+    "type": "chat",
+    "config": {
+      "description": "What the chat does",
+      "inputVariable": "userMessage"      // ⚠️ REQUIRED!
+    }
+  },
+  "config": {
+    "steps": [
+      {
+        "id": "chat-step",
+        "module": "ai.ai-sdk.chat",
+        "inputs": {
+          "model": "gpt-4o-mini",
+          "provider": "openai",
+          "messages": [                   // ⚠️ Use messages array format
+            {
+              "role": "system",
+              "content": "Your system prompt here"
+            },
+            {
+              "role": "user",
+              "content": "{{trigger.userMessage}}"  // ⚠️ Reference the inputVariable
+            }
+          ],
+          "temperature": 0.7,
+          "maxTokens": 500
+        },
+        "outputAs": "response"
+      }
+    ]
+  }
+}
+```
+
+**Chat Trigger Requirements:**
+1. `trigger.type` = `"chat"` (top level!)
+2. `trigger.config.inputVariable` = `"userMessage"` (or any name you choose)
+3. Use `ai.ai-sdk.chat` module (NOT `generateText`)
+4. Pass messages as array with system + user roles
+5. Reference input via `{{trigger.userMessage}}` (or your chosen variable name)
 
 ## Workflow Steps
 
