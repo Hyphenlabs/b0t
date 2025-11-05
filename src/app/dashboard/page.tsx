@@ -77,7 +77,7 @@ export default function DashboardPage() {
   const failedRuns = stats?.automations?.failedRuns ?? 0;
   const activeJobs = stats?.automations?.activeJobs ?? 0;
   const totalExecutions = stats?.automations?.totalExecutions ?? 0;
-  const database = stats?.system?.database ?? 'SQLite';
+  const database = stats?.system?.database ?? 'PostgreSQL';
 
   return (
     <DashboardLayout>

@@ -548,49 +548,85 @@ function getConfigurableFields(
 ): ConfigurableField[] {
   const fields: ConfigurableField[] = [];
 
-  // AI modules
-  if (modulePath.startsWith('ai.')) {
-    fields.push({
-      key: 'systemPrompt',
-      label: 'System Prompt',
-      type: 'textarea',
-      value: inputs.systemPrompt || '',
-      placeholder: 'You are a helpful AI assistant...',
-      description: 'Instructions that guide the AI behavior and responses',
-    });
+  // AI modules (ai.ai-sdk, ai.openai, ai.anthropic, ai.openai-workflow)
+  if (modulePath.startsWith('ai.') || modulePath.toLowerCase().includes('openai') || modulePath.toLowerCase().includes('anthropic')) {
+    // Provider selection (for ai-sdk module only, not legacy modules)
+    if (modulePath.includes('ai-sdk')) {
+      fields.push({
+        key: 'provider',
+        label: 'AI Provider',
+        type: 'select',
+        value: inputs.provider || 'openai',
+        options: ['openai', 'anthropic'],
+        description: 'Choose between OpenAI (GPT) or Anthropic (Claude)',
+      });
+    }
 
-    fields.push({
-      key: 'model',
-      label: 'Model',
-      type: 'text',
-      value: inputs.model || 'gpt-4',
-      placeholder: 'gpt-4, gpt-3.5-turbo, etc.',
-      description: 'AI model to use',
-    });
+    // System prompt (if present in inputs or always show for AI modules)
+    if (inputs.systemPrompt !== undefined || modulePath.startsWith('ai.')) {
+      fields.push({
+        key: 'systemPrompt',
+        label: 'System Prompt',
+        type: 'textarea',
+        value: inputs.systemPrompt || '',
+        placeholder: 'You are a helpful AI assistant...',
+        description: 'Instructions that guide the AI behavior and responses',
+      });
+    }
 
-    fields.push({
-      key: 'temperature',
-      label: 'Temperature',
-      type: 'number',
-      value: inputs.temperature ?? 0.7,
-      min: 0,
-      max: 2,
-      step: 0.1,
-      placeholder: '0.7',
-      description: 'Controls randomness (0 = focused, 2 = creative)',
-    });
+    // Model selection (if present in inputs or always show for AI modules)
+    if (inputs.model !== undefined || modulePath.startsWith('ai.')) {
+      fields.push({
+        key: 'model',
+        label: 'Model',
+        type: 'text',
+        value: inputs.model || 'gpt-4o-mini',
+        placeholder: 'gpt-4o, gpt-4o-mini, claude-3-5-sonnet-20241022, etc.',
+        description: 'AI model to use',
+      });
+    }
 
-    fields.push({
-      key: 'maxTokens',
-      label: 'Max Tokens',
-      type: 'number',
-      value: inputs.maxTokens ?? 1000,
-      min: 1,
-      max: 4000,
-      step: 1,
-      placeholder: '1000',
-      description: 'Maximum length of AI response',
-    });
+    // Temperature (if present in inputs)
+    if (inputs.temperature !== undefined) {
+      fields.push({
+        key: 'temperature',
+        label: 'Temperature',
+        type: 'number',
+        value: inputs.temperature ?? 0.7,
+        min: 0,
+        max: 2,
+        step: 0.1,
+        placeholder: '0.7',
+        description: 'Controls randomness (0 = focused, 2 = creative)',
+      });
+    }
+
+    // Max tokens (if present in inputs)
+    if (inputs.maxTokens !== undefined) {
+      fields.push({
+        key: 'maxTokens',
+        label: 'Max Output Tokens',
+        type: 'number',
+        value: inputs.maxTokens ?? 4096,
+        min: 1,
+        max: 8000,
+        step: 1,
+        placeholder: '4096',
+        description: 'Maximum length of AI response',
+      });
+    }
+
+    // Prompt field (for modules that use 'prompt' instead of separate system/user)
+    if (inputs.prompt !== undefined && typeof inputs.prompt === 'string' && !inputs.prompt.includes('{{')) {
+      fields.push({
+        key: 'prompt',
+        label: 'Prompt',
+        type: 'textarea',
+        value: inputs.prompt || '',
+        placeholder: 'Enter your prompt...',
+        description: 'The prompt to send to the AI',
+      });
+    }
   }
 
   // Social media modules

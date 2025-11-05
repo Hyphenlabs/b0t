@@ -86,7 +86,8 @@ export type AutomationConfig = z.infer<typeof automationConfigSchema>;
 export const credentialTypeSchema = z.enum(['api_key', 'token', 'secret', 'connection_string']);
 
 // Platform-specific credential validators
-const openaiKeySchema = z.string().regex(/^sk-[a-zA-Z0-9]{20,}$/, 'Invalid OpenAI API key format (must start with sk-)');
+// OpenAI keys can be: sk-... (legacy), sk-proj-... (project), sk-org-... (organization)
+const openaiKeySchema = z.string().regex(/^sk-[a-zA-Z0-9_-]{20,}$/, 'Invalid OpenAI API key format (must start with sk-)');
 const anthropicKeySchema = z.string().regex(/^sk-ant-[a-zA-Z0-9_-]{95,}$/, 'Invalid Anthropic API key format (must start with sk-ant-)');
 const stripeKeySchema = z.string().regex(/^(sk|pk)_(test|live)_[a-zA-Z0-9]{24,}$/, 'Invalid Stripe key format');
 const slackTokenSchema = z.string().regex(/^xox[abp]-[a-zA-Z0-9-]+$/, 'Invalid Slack token format');

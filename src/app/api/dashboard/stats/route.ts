@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { db, useSQLite } from '@/lib/db';
-import { workflowsTableSQLite, workflowRunsTableSQLite } from '@/lib/schema';
+import { db } from '@/lib/db';
+import { workflowsTable, workflowRunsTable } from '@/lib/schema';
 import { eq, count } from 'drizzle-orm';
 
 export async function GET() {
@@ -26,18 +26,18 @@ export async function GET() {
     ] = await Promise.all([
       // Count successful workflow executions
       dbAny.select({ count: count() })
-        .from(workflowRunsTableSQLite)
-        .where(eq(workflowRunsTableSQLite.status, 'success')) as Promise<Array<{ count: number }>>,
+        .from(workflowRunsTable)
+        .where(eq(workflowRunsTable.status, 'success')) as Promise<Array<{ count: number }>>,
 
       // Count failed workflow executions
       dbAny.select({ count: count() })
-        .from(workflowRunsTableSQLite)
-        .where(eq(workflowRunsTableSQLite.status, 'error')) as Promise<Array<{ count: number }>>,
+        .from(workflowRunsTable)
+        .where(eq(workflowRunsTable.status, 'error')) as Promise<Array<{ count: number }>>,
 
       // Count active workflows (not draft or paused)
       dbAny.select({ count: count() })
-        .from(workflowsTableSQLite)
-        .where(eq(workflowsTableSQLite.status, 'active')) as Promise<Array<{ count: number }>>,
+        .from(workflowsTable)
+        .where(eq(workflowsTable.status, 'active')) as Promise<Array<{ count: number }>>,
     ]);
 
     const successCount = successfulRuns[0]?.count || 0;
@@ -53,7 +53,7 @@ export async function GET() {
         totalExecutions,
       },
       system: {
-        database: useSQLite ? 'SQLite' : 'PostgreSQL',
+        database: 'PostgreSQL',
       },
     });
   } catch (error) {

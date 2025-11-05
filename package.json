@@ -32,6 +32,7 @@
     "docker:debug": "docker compose --profile debug up -d"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.41",
     "@ai-sdk/openai": "^2.0.62",
     "@ai-sdk/react": "^2.0.87",
     "@anthropic-ai/sdk": "^0.68.0",

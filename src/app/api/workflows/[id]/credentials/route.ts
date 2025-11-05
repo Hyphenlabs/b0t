@@ -82,9 +82,10 @@ export async function GET(
       config = workflow.config as typeof config;
     }
 
-    // Analyze required credentials
-    const requiredCredentials = analyzeWorkflowCredentials(config);
+    // Analyze required credentials (pass trigger to detect chat workflows)
+    const requiredCredentials = analyzeWorkflowCredentials(config, workflow.trigger);
     console.log('Workflow config:', JSON.stringify(config, null, 2));
+    console.log('Workflow trigger:', workflow.trigger);
     console.log('Required credentials detected:', requiredCredentials);
 
     // Get OAuth accounts (can have multiple per platform)

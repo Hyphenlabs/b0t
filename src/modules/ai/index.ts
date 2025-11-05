@@ -3,7 +3,7 @@
 /**
  * AI Modules
  *
- * Reusable modules for AI/ML services (OpenAI, Anthropic, Replicate, etc.)
+ * Reusable modules for AI/ML services (Unified AI SDK, Cohere, Replicate, etc.)
  * Each module provides AI operations with built-in:
  * - Circuit breakers
  * - Rate limiting
@@ -12,9 +12,8 @@
  * - Timeout handling
  */
 
-// Language Models
-export * from './openai';
-export * from './anthropic';
+// Language Models - Unified AI SDK (OpenAI + Anthropic)
+export * from './ai-sdk';
 export * from './cohere';
 
 // Vector Databases

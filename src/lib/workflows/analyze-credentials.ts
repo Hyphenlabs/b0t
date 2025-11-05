@@ -11,18 +11,31 @@ export interface RequiredCredential {
 /**
  * Extract all credential references from workflow config
  */
-export function analyzeWorkflowCredentials(config: {
-  steps: Array<{
-    id: string;
-    module?: string;
-    inputs?: Record<string, unknown>;
-    type?: string;
-    then?: unknown[];
-    else?: unknown[];
-    steps?: unknown[];
-  }>;
-}): RequiredCredential[] {
+export function analyzeWorkflowCredentials(
+  config: {
+    steps: Array<{
+      id: string;
+      module?: string;
+      inputs?: Record<string, unknown>;
+      type?: string;
+      then?: unknown[];
+      else?: unknown[];
+      steps?: unknown[];
+    }>;
+  },
+  trigger?: {
+    type: 'cron' | 'manual' | 'webhook' | 'telegram' | 'discord' | 'chat';
+    config: Record<string, unknown>;
+  }
+): RequiredCredential[] {
   const credentials = new Set<string>();
+
+  // Chat workflows require AI credentials based on CHAT_AI_PROVIDER env var
+  // Default to OpenAI, but can be configured to use Anthropic
+  if (trigger?.type === 'chat') {
+    const chatProvider = process.env.CHAT_AI_PROVIDER || 'openai';
+    credentials.add(chatProvider);
+  }
 
   function extractFromValue(value: unknown) {
     if (typeof value === 'string') {
@@ -52,12 +65,39 @@ export function analyzeWorkflowCredentials(config: {
         if (modulePath.includes('twitter')) {
           credentials.add('twitter');
         }
-        // Check for OpenAI modules
-        if (modulePath.includes('openai')) {
+        // Check for AI SDK module - supports both OpenAI and Anthropic
+        if (modulePath.includes('ai.ai-sdk') || modulePath.includes('ai-sdk')) {
+          // Check inputs to determine which provider is needed
+          const inputs = s.inputs as Record<string, unknown> | undefined;
+          const provider = inputs?.provider as string | undefined;
+          const model = inputs?.model as string | undefined;
+          const apiKey = inputs?.apiKey as string | undefined;
+
+          // If apiKey references a variable, extract it
+          if (apiKey && typeof apiKey === 'string' && apiKey.includes('{{user.')) {
+            const match = apiKey.match(/\{\{user\.([a-zA-Z0-9_-]+)\}\}/);
+            if (match) {
+              credentials.add(match[1]);
+            }
+          } else {
+            // Detect provider from explicit provider field or model name
+            if (provider === 'anthropic' || (model && (model.includes('claude') || model.includes('anthropic')))) {
+              credentials.add('anthropic');
+            } else if (provider === 'openai' || (model && (model.includes('gpt') || model.includes('o1') || model.includes('o3')))) {
+              credentials.add('openai');
+            } else {
+              // Default to both if we can't determine
+              credentials.add('openai');
+              credentials.add('anthropic');
+            }
+          }
+        }
+        // Legacy: Check for old OpenAI modules (in case any old workflows exist)
+        if (modulePath.includes('ai.openai') && !modulePath.includes('ai-sdk')) {
           credentials.add('openai');
         }
-        // Check for Anthropic modules
-        if (modulePath.includes('anthropic') || modulePath.includes('claude')) {
+        // Legacy: Check for old Anthropic modules (in case any old workflows exist)
+        if ((modulePath.includes('ai.anthropic') || modulePath.includes('claude')) && !modulePath.includes('ai-sdk')) {
           credentials.add('anthropic');
         }
         // Check for YouTube modules

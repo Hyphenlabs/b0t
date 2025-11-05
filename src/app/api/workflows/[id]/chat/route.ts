@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
 import { postgresDb } from '@/lib/db';
 import { workflowsTablePostgres } from '@/lib/schema';
@@ -9,6 +10,10 @@ import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
+// Chat AI configuration (can be overridden via env vars)
+const CHAT_AI_PROVIDER = (process.env.CHAT_AI_PROVIDER || 'openai') as 'openai' | 'anthropic';
+const CHAT_AI_MODEL = process.env.CHAT_AI_MODEL || (CHAT_AI_PROVIDER === 'openai' ? 'gpt-4-turbo' : 'claude-3-5-sonnet-20241022');
 
 /**
  * POST /api/workflows/[id]/chat
@@ -117,15 +122,20 @@ Never use ASCII art tables with + and - characters. Always use the | and - markd
       .filter((msg) => msg.content); // Remove empty messages
 
     // Log the formatted messages for debugging
-    logger.info({ workflowId, formattedMessages }, 'Formatted messages for AI');
+    logger.info({ workflowId, formattedMessages, provider: CHAT_AI_PROVIDER, model: CHAT_AI_MODEL }, 'Formatted messages for AI');
+
+    // Get the AI model instance based on provider
+    const modelInstance = CHAT_AI_PROVIDER === 'openai'
+      ? createOpenAI({ apiKey: process.env.OPENAI_API_KEY })(CHAT_AI_MODEL)
+      : createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY })(CHAT_AI_MODEL);
 
     // Stream the AI response using AI SDK
-    // Note: This uses the AI SDK directly (not the module system) because:
-    // - It's UI-specific streaming (not a workflow action)
-    // - It requires special streaming format for React components
+    // Note: This uses the AI SDK (from the ai-sdk module) for streaming because:
+    // - It's optimized for UI-specific streaming (React components)
+    // - It handles SSE/streaming format automatically
     // - The actual workflow execution uses the module system via executeWorkflowConfig
     const result = streamText({
-      model: openai('gpt-4-turbo'),
+      model: modelInstance,
       system: systemPrompt,
       messages: formattedMessages,
       async onFinish({ text }) {

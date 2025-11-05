@@ -704,53 +704,50 @@ export function getModuleRegistry(): ModuleCategory[] {
       name: 'AI',
       modules: [
         {
-          name: 'openai',
+          name: 'ai-sdk',
           functions: [
             {
               name: 'generateText',
-              description: 'Generate text with GPT models',
-              signature: 'generateText({ prompt, systemPrompt?, model?, temperature?, maxTokens?, apiKey? })',
-              example: 'await generateText({ prompt: "Write a tweet about AI", model: "gpt-4o-mini", apiKey: "{{user.openai}}" })',
-            },
-          ],
-        },
-        {
-          name: 'anthropic',
-          functions: [
-            {
-              name: 'createCompletion',
-              description: 'Generate text with Claude',
-              signature: 'createCompletion({ messages, model?, maxTokens?, temperature?, systemPrompt?, tools? })',
-            },
-            {
-              name: 'generateText',
-              description: 'Simple text generation',
-              signature: 'generateText(prompt, systemPrompt?, model?)',
+              description: 'Generate text with any AI model (OpenAI or Anthropic)',
+              signature: 'generateText({ prompt, systemPrompt?, model?, provider?, temperature?, maxTokens?, apiKey? })',
+              example: 'await generateText({ prompt: "Write a tweet about AI", model: "gpt-4o-mini", provider: "openai", apiKey: "{{user.openai}}" })',
             },
             {
               name: 'chat',
-              description: 'Chat with conversation history',
-              signature: 'chat(messages, systemPrompt?, model?)',
+              description: 'Chat with conversation history (supports multiple providers)',
+              signature: 'chat({ messages, model?, provider?, temperature?, maxTokens?, apiKey? })',
+              example: 'await chat({ messages: [{ role: "user", content: "Hello" }], model: "claude-3-5-sonnet-20241022", provider: "anthropic" })',
+            },
+            {
+              name: 'streamGeneration',
+              description: 'Stream text generation for real-time responses',
+              signature: 'streamGeneration({ prompt, systemPrompt?, model?, provider?, temperature?, maxTokens?, apiKey?, onChunk? })',
+            },
+            {
+              name: 'generateJSON',
+              description: 'Generate structured JSON output with schema validation',
+              signature: 'generateJSON({ prompt, systemPrompt?, model?, provider?, temperature?, maxTokens?, apiKey?, schema })',
             },
             {
               name: 'generateFast',
-              description: 'Fast generation with Haiku',
-              signature: 'generateFast(prompt, systemPrompt?)',
+              description: 'Fast generation with GPT-4o-mini',
+              signature: 'generateFast(prompt, systemPrompt?, apiKey?)',
+              example: 'await generateFast("Write a short summary", undefined, "{{user.openai}}")',
             },
             {
               name: 'generateQuality',
-              description: 'High quality with Opus',
-              signature: 'generateQuality(prompt, systemPrompt?)',
+              description: 'High quality generation with GPT-4o',
+              signature: 'generateQuality(prompt, systemPrompt?, apiKey?)',
             },
             {
-              name: 'analyzeImage',
-              description: 'Analyze image with vision',
-              signature: 'analyzeImage(imageUrl, prompt, model?)',
+              name: 'generateClaudeFast',
+              description: 'Fast generation with Claude Haiku',
+              signature: 'generateClaudeFast(prompt, systemPrompt?, apiKey?)',
             },
             {
-              name: 'streamCompletion',
-              description: 'Stream completion for real-time',
-              signature: 'streamCompletion({ messages, model?, maxTokens?, temperature?, systemPrompt? })',
+              name: 'generateClaudeQuality',
+              description: 'High quality generation with Claude Sonnet',
+              signature: 'generateClaudeQuality(prompt, systemPrompt?, apiKey?)',
             },
           ],
         },

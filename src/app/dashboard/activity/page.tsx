@@ -48,8 +48,19 @@ const formatDuration = (ms?: number | null) => {
   return `${(ms / 1000).toFixed(1)}s`;
 };
 
-const formatDate = (date: Date | string) => {
-  const d = new Date(date);
+const formatDate = (date: Date | string | null) => {
+  // Handle null/undefined dates
+  if (!date) {
+    return '—';
+  }
+
+  const d = typeof date === 'string' ? new Date(date) : date;
+
+  // Validate the date
+  if (isNaN(d.getTime())) {
+    return 'Invalid date';
+  }
+
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffMins = Math.floor(diffMs / 60000);
@@ -65,6 +76,29 @@ const formatDate = (date: Date | string) => {
     minute: '2-digit',
   });
 };
+
+// Component to display time that auto-updates every minute
+function TimeCell({ date }: { date: Date | string | null }) {
+  const [formattedTime, setFormattedTime] = useState(() => formatDate(date));
+
+  useEffect(() => {
+    // Update the formatted time immediately in case the date prop changed
+    setFormattedTime(formatDate(date));
+
+    // Set up interval to update time display every minute
+    const interval = setInterval(() => {
+      setFormattedTime(formatDate(date));
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [date]);
+
+  return (
+    <div className="text-right text-xs text-secondary tabular-nums">
+      {formattedTime}
+    </div>
+  );
+}
 
 const columns: ColumnDef<JobLog>[] = [
   {
@@ -102,11 +136,7 @@ const columns: ColumnDef<JobLog>[] = [
   {
     accessorKey: 'createdAt',
     header: () => <div className="text-right">Time</div>,
-    cell: ({ row }) => (
-      <div className="text-right text-xs text-secondary tabular-nums">
-        {formatDate(row.original.createdAt)}
-      </div>
-    ),
+    cell: ({ row }) => <TimeCell date={row.original.createdAt} />,
   },
 ];
 
