@@ -4,7 +4,7 @@ export interface WorkflowListItem {
   description: string | null;
   status: string;
   trigger: {
-    type: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat';
+    type: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
     config: Record<string, unknown>;
   };
   config: Record<string, unknown>;

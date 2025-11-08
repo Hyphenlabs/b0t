@@ -26,7 +26,7 @@ interface WorkflowSettingsDialogProps {
   workflowName: string;
   workflowConfig: Record<string, unknown>;
   workflowTrigger: {
-    type: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat';
+    type: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
     config: Record<string, unknown>;
   };
   open: boolean;

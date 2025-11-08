@@ -613,7 +613,7 @@ async function loadUserCredentials(userId: string): Promise<Record<string, strin
     // Add platform aliases for dual-auth platforms
     // Maps module names (from workflow paths) to all possible credential IDs
     const platformAliases: Record<string, string[]> = {
-      'youtube': ['youtube_apikey', 'youtube'],
+      'youtube': ['youtube_apikey', 'youtube_api_key', 'youtube'],
       'twitter': ['twitter_oauth2', 'twitter'],
       'github': ['github_oauth', 'github'],
       'google-sheets': ['googlesheets', 'googlesheets_oauth'],

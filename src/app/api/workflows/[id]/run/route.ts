@@ -29,9 +29,10 @@ export async function POST(
   const { id } = await context.params;
 
   try {
-    // Optional: Accept trigger data and priority from request body
+    // Optional: Accept trigger data, trigger type, and priority from request body
     const body = await request.json().catch(() => ({}));
     const triggerData = body.triggerData || {};
+    const triggerType = body.triggerType || 'manual';
     const priority = body.priority as number | undefined;
 
     // Use queue if available, otherwise execute directly
@@ -39,7 +40,7 @@ export async function POST(
       const { jobId, queued } = await queueWorkflowExecution(
         id,
         session.user.id,
-        'manual',
+        triggerType,
         triggerData,
         { priority }
       );
@@ -56,7 +57,7 @@ export async function POST(
     const result = await executeWorkflow(
       id,
       session.user.id,
-      'manual',
+      triggerType,
       triggerData
     );
 

@@ -16,11 +16,12 @@ import { ManualTriggerConfig } from './trigger-configs/manual-trigger-config';
 import { CronTriggerConfig } from './trigger-configs/cron-trigger-config';
 import { TelegramTriggerConfig } from './trigger-configs/telegram-trigger-config';
 import { DiscordTriggerConfig } from './trigger-configs/discord-trigger-config';
+import { ChatInputTriggerConfig } from './trigger-configs/chat-input-trigger-config';
 
 interface TriggerConfigDialogProps {
   workflowId: string;
   workflowName: string;
-  triggerType: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat';
+  triggerType: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
   triggerConfig?: Record<string, unknown>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -88,6 +89,8 @@ export function TriggerConfigDialog({
         return 'Set up Discord bot integration to trigger this workflow via slash commands.';
       case 'chat':
         return 'Configure chat-based workflow settings.';
+      case 'chat-input':
+        return 'Configure custom input fields for this workflow. Users will fill these fields when triggering the workflow.';
       default:
         return 'Configure trigger settings for this workflow.';
     }
@@ -107,6 +110,8 @@ export function TriggerConfigDialog({
         return 'Discord Bot Trigger';
       case 'chat':
         return 'Chat Trigger';
+      case 'chat-input':
+        return 'Chat Input Trigger';
       default:
         return 'Trigger Configuration';
     }
@@ -137,6 +142,13 @@ export function TriggerConfigDialog({
       case 'discord':
         return (
           <DiscordTriggerConfig
+            initialConfig={triggerConfig}
+            onConfigChange={setTriggerData}
+          />
+        );
+      case 'chat-input':
+        return (
+          <ChatInputTriggerConfig
             initialConfig={triggerConfig}
             onConfigChange={setTriggerData}
           />

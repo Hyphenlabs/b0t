@@ -20,7 +20,7 @@ interface WorkflowExport {
   name: string;
   description: string;
   trigger?: {
-    type: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat';
+    type: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
     config: Record<string, unknown>;
   };
   config: {

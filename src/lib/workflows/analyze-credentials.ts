@@ -326,7 +326,7 @@ export function analyzeWorkflowCredentials(
     }>;
   },
   trigger?: {
-    type: 'cron' | 'manual' | 'webhook' | 'telegram' | 'discord' | 'chat';
+    type: 'cron' | 'manual' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
     config: Record<string, unknown>;
   }
 ): RequiredCredential[] {
@@ -443,9 +443,24 @@ export function analyzeWorkflowCredentials(
   processSteps(config.steps);
 
   // Combine explicit credentials with platform usage
-  for (const platform of explicitCredentials) {
-    if (!platformUsage.has(platform)) {
-      platformUsage.set(platform, new Set());
+  // Normalize credential names to platform names (e.g., youtube_api_key -> youtube)
+  for (const credentialName of explicitCredentials) {
+    // Try to extract platform name from credential variable
+    // Pattern: platform_api_key, platform_token, platform_key, etc.
+    let platformName = credentialName;
+
+    // Remove common suffixes to get platform name
+    const suffixes = ['_api_key', '_apikey', '_token', '_key', '_secret', '_access_token', '_refresh_token'];
+    for (const suffix of suffixes) {
+      if (credentialName.endsWith(suffix)) {
+        platformName = credentialName.substring(0, credentialName.length - suffix.length);
+        break;
+      }
+    }
+
+    // Only add if it's not already tracked (avoid duplicates)
+    if (!platformUsage.has(platformName)) {
+      platformUsage.set(platformName, new Set());
     }
   }
 

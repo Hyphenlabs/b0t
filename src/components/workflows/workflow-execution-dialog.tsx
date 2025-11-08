@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import { Play, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ChatTriggerConfig } from './trigger-configs/chat-trigger-config';
 import { WebhookTriggerConfig } from './trigger-configs/webhook-trigger-config';
+import { ChatInputExecute } from './trigger-configs/chat-input-execute';
+import { InputField } from './trigger-configs/chat-input-trigger-config';
 import { RunOutputModal } from './run-output-modal';
 import { useWorkflowProgress } from '@/hooks/useWorkflowProgress';
 import { WorkflowProgress } from '@/components/workflow/WorkflowProgress';
@@ -23,7 +25,7 @@ interface WorkflowExecutionDialogProps {
   workflowName: string;
   workflowDescription?: string;
   workflowConfig?: Record<string, unknown>;
-  triggerType: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat';
+  triggerType: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
   triggerConfig?: Record<string, unknown>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,6 +50,7 @@ export function WorkflowExecutionDialog({
   workflowDescription,
   workflowConfig,
   triggerType,
+  triggerConfig,
   open,
   onOpenChange,
   onExecuted,
@@ -56,11 +59,15 @@ export function WorkflowExecutionDialog({
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [showOutputModal, setShowOutputModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentTriggerData, setCurrentTriggerData] = useState<Record<string, unknown> | undefined>();
+  const chatInputExecuteRef = useRef<(() => void) | null>(null);
 
   // Use the workflow progress hook for real-time updates
-  const { state: progressState, reset: resetProgress } = useWorkflowProgress(
+  const { state: progressState, reset: resetProgress} = useWorkflowProgress(
     executing ? workflowId : null,
-    executing
+    executing,
+    triggerType,
+    currentTriggerData
   );
 
   // Reset state when dialog opens/closes
@@ -119,6 +126,8 @@ export function WorkflowExecutionDialog({
         return 'Chat with this workflow to trigger execution with conversational context.';
       case 'webhook':
         return 'Test webhook triggers for this workflow.';
+      case 'chat-input':
+        return 'Fill in the input fields below to execute this workflow.';
       default:
         return 'Execute this workflow now.';
     }
@@ -128,6 +137,15 @@ export function WorkflowExecutionDialog({
     await handleExecute();
     return { success: true };
   };
+
+  const handleChatInputExecute = useCallback(async (inputData: Record<string, unknown>) => {
+    // Set trigger data and start execution
+    // This will cause the useWorkflowProgress hook to connect to SSE stream with the trigger data
+    setCurrentTriggerData(inputData);
+    setExecutionResult(null);
+    resetProgress();
+    setExecuting(true);
+  }, [resetProgress]);
 
   const renderTriggerConfig = () => {
     switch (triggerType) {
@@ -150,6 +168,19 @@ export function WorkflowExecutionDialog({
             onExecute={handleExecuteWrapper}
           />
         );
+      case 'chat-input':
+        const fields = (triggerConfig?.fields as InputField[]) || [];
+        return (
+          <ChatInputExecute
+            workflowId={workflowId}
+            fields={fields}
+            onExecute={handleChatInputExecute}
+            executing={executing}
+            onReady={(executeFunc) => {
+              chatInputExecuteRef.current = executeFunc;
+            }}
+          />
+        );
       default:
         return null; // Manual and other triggers just show the execute button
     }
@@ -158,6 +189,14 @@ export function WorkflowExecutionDialog({
   const handleViewResults = () => {
     setShowOutputModal(true);
   };
+
+  // Handle Enter key for manual trigger
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !executing && !executionResult && triggerType === 'manual') {
+      e.preventDefault();
+      handleExecute();
+    }
+  }, [executing, executionResult, triggerType, handleExecute]);
 
   return (
     <>
@@ -171,6 +210,7 @@ export function WorkflowExecutionDialog({
                 : 'sm:max-w-md'
           }
           onOpenAutoFocus={triggerType === 'chat' ? (e) => e.preventDefault() : undefined}
+          onKeyDown={handleKeyDown}
         >
           {triggerType === 'chat' && !isFullscreen ? (
             <DialogHeader>
@@ -210,10 +250,16 @@ export function WorkflowExecutionDialog({
               >
                 Close
               </Button>
-              {/* Only show Execute button for triggers without built-in execution UI */}
+              {/* Show Execute button for all triggers except webhook and chat */}
               {triggerType !== 'webhook' && !executionResult && (
                 <Button
-                  onClick={() => handleExecute()}
+                  onClick={() => {
+                    if (triggerType === 'chat-input' && chatInputExecuteRef.current) {
+                      chatInputExecuteRef.current();
+                    } else {
+                      handleExecute();
+                    }
+                  }}
                   disabled={executing}
                   className="flex-1 sm:flex-auto"
                   size="lg"

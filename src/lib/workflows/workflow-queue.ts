@@ -22,7 +22,7 @@ export const WORKFLOW_QUEUE_NAME = 'workflows-execution';
 export interface WorkflowJobData {
   workflowId: string;
   userId: string;
-  triggerType: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord';
+  triggerType: 'manual' | 'cron' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
   triggerData?: Record<string, unknown>;
 }
 

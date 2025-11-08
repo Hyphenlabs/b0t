@@ -5,30 +5,16 @@ import { executeWorkflowWithProgress } from '@/lib/workflows/executor-stream';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/workflows/[id]/stream
- * Execute a workflow with real-time progress streaming via SSE
- *
- * This endpoint uses Server-Sent Events (SSE) to stream execution progress
- * as each workflow step executes. The frontend receives real-time updates.
+ * Helper to create SSE stream with workflow execution
  */
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+async function createWorkflowStream(
+  workflowId: string,
+  userId: string,
+  triggerType: string,
+  triggerData?: Record<string, unknown>
 ) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const { id } = await context.params;
-
-  // Create SSE stream
   const encoder = new TextEncoder();
-  const stream = new ReadableStream({
+  return new ReadableStream({
     async start(controller) {
       // Helper to send SSE events
       const sendEvent = (event: string, data: unknown) => {
@@ -39,10 +25,10 @@ export async function GET(
       try {
         // Execute workflow with progress callback
         await executeWorkflowWithProgress(
-          id,
-          session.user.id,
-          'manual',
-          undefined, // triggerData
+          workflowId,
+          userId,
+          triggerType,
+          triggerData,
           (event) => {
             // Stream each progress event to the client
             sendEvent(event.type, event);
@@ -60,6 +46,38 @@ export async function GET(
       }
     },
   });
+}
+
+/**
+ * GET /api/workflows/[id]/stream
+ * Execute a workflow with real-time progress streaming via SSE
+ *
+ * Query params:
+ * - triggerType: The type of trigger (manual, chat, chat-input, etc.)
+ * - triggerData: JSON-encoded trigger data for triggers like chat-input
+ */
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { id } = await context.params;
+
+  // Parse trigger type and data from query params
+  const { searchParams } = new URL(request.url);
+  const triggerType = searchParams.get('triggerType') || 'manual';
+  const triggerDataParam = searchParams.get('triggerData');
+  const triggerData = triggerDataParam ? JSON.parse(triggerDataParam) : undefined;
+
+  const stream = await createWorkflowStream(id, session.user.id, triggerType, triggerData);
 
   return new Response(stream, {
     headers: {

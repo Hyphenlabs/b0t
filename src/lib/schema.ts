@@ -153,7 +153,7 @@ export const workflowsTable = pgTable('workflows', {
     }>;
   }>(),
   trigger: text('trigger').notNull().$type<{
-    type: 'cron' | 'manual' | 'webhook' | 'telegram' | 'discord' | 'chat';
+    type: 'cron' | 'manual' | 'webhook' | 'telegram' | 'discord' | 'chat' | 'chat-input';
     config: Record<string, unknown>;
   }>(),
   status: varchar('status', { length: 50 }).notNull().default('draft'),

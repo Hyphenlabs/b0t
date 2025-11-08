@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Download, Trash2, Play, Key, MessageSquare, Sliders, BarChart3, Pencil, Clock, Webhook, Send } from 'lucide-react';
+import { Download, Trash2, Play, Key, MessageSquare, Sliders, BarChart3, Pencil, Clock, Webhook, Send, FormInput } from 'lucide-react';
 import { WorkflowListItem } from '@/types/workflows';
 import { WorkflowExecutionDialog } from './workflow-execution-dialog';
 import { CredentialsConfigDialog } from './credentials-config-dialog';
@@ -165,6 +165,8 @@ export function WorkflowCard({ workflow, onDeleted, onExport, onUpdated }: Workf
     switch (workflow.trigger.type) {
       case 'chat':
         return MessageSquare;
+      case 'chat-input':
+        return FormInput;
       case 'cron':
         return Clock;
       case 'webhook':
@@ -181,6 +183,8 @@ export function WorkflowCard({ workflow, onDeleted, onExport, onUpdated }: Workf
     switch (workflow.trigger.type) {
       case 'chat':
         return { label: 'Chat', icon: MessageSquare };
+      case 'chat-input':
+        return { label: 'Run', icon: FormInput };
       case 'cron':
         return { label: 'Run Now', icon: Play };
       case 'webhook':
