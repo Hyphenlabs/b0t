@@ -165,6 +165,7 @@ export function useWorkflowProgress(
       setState((prev) => ({
         ...prev,
         status: 'failed',
+        error: data.error, // Set workflow-level error from step failure
         steps: prev.steps.map((step, i) =>
           i === data.stepIndex
             ? { ...step, status: 'failed' as const, error: data.error }

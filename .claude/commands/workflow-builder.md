@@ -15,6 +15,28 @@ This command creates workflows by:
 5. Building the workflow JSON
 6. Testing and importing it
 
+## Interactive Mode
+
+**Use the AskUserQuestion tool throughout this workflow builder for all user choices.** This provides a better user experience with selectable options (arrow keys) instead of plain text questions.
+
+When presenting options to the user (trigger types, output display types, etc.), use:
+
+```json
+{
+  "questions": [{
+    "question": "The full question?",
+    "header": "Short label",
+    "multiSelect": false,
+    "options": [
+      {"label": "Option 1", "description": "What this does"},
+      {"label": "Option 2", "description": "What this does"}
+    ]
+  }]
+}
+```
+
+Apply this to Steps 1, 4, and anywhere else where you're presenting multiple choices to the user.
+
 ## Process Flow
 
 ### Step 0: Pre-flight Service Check

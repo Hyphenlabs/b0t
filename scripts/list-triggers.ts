@@ -36,6 +36,34 @@ const triggers: TriggerInfo[] = [
     }
   },
   {
+    type: 'chat-input',
+    description: 'Custom form input trigger (user fills fields before execution)',
+    configRequirements: ['fields - Array of input field definitions with id, label, key, type, required, placeholder'],
+    example: {
+      type: 'chat-input',
+      config: {
+        fields: [
+          {
+            id: '1',
+            label: 'Search Query',
+            key: 'query',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter search term...'
+          },
+          {
+            id: '2',
+            label: 'Max Results',
+            key: 'maxResults',
+            type: 'number',
+            required: false,
+            defaultValue: '10'
+          }
+        ]
+      }
+    }
+  },
+  {
     type: 'cron',
     description: 'Scheduled execution (cron syntax)',
     configRequirements: ['schedule - Cron expression (e.g., "0 9 * * *" for daily at 9 AM)'],

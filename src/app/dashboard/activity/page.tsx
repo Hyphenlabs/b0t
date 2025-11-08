@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TableSkeleton } from '@/components/ui/card-skeleton';
 import { AlertCircle, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { useClient } from '@/components/providers/ClientProvider';
+import { toast } from 'sonner';
 import {
   useReactTable,
   getCoreRowModel,
@@ -137,9 +138,40 @@ const columns: ColumnDef<JobLog>[] = [
   {
     accessorKey: 'message',
     header: 'Message',
-    cell: ({ row }) => (
-      <div className="text-xs text-secondary max-w-md truncate">{row.original.message}</div>
-    ),
+    cell: ({ row }) => {
+      const isError = row.original.status === 'error';
+      const message = row.original.message;
+
+      const handleCopyError = () => {
+        if (isError && message) {
+          // Select the text
+          const range = document.createRange();
+          const selection = window.getSelection();
+          const messageElement = document.getElementById(`message-${row.id}`);
+
+          if (messageElement && selection) {
+            range.selectNodeContents(messageElement);
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(message);
+            toast.success('Error copied to clipboard');
+          }
+        }
+      };
+
+      return (
+        <div
+          id={`message-${row.id}`}
+          className={`text-xs text-secondary max-w-2xl truncate ${isError ? 'cursor-pointer hover:text-destructive transition-colors' : ''}`}
+          onClick={handleCopyError}
+          title={isError ? 'Click to copy error message' : message}
+        >
+          {message}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'duration',

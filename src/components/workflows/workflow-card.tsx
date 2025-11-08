@@ -321,14 +321,12 @@ export function WorkflowCard({ workflow, onDeleted, onExport, onUpdated }: Workf
             variant="ghost"
             size="sm"
             onClick={() => setOutputsDialogOpen(true)}
-            disabled={!workflow.lastRun || workflow.lastRunStatus !== 'success'}
+            disabled={!workflow.lastRun}
             className="h-7 px-2 transition-all duration-200 hover:scale-105 active:scale-95 group disabled:opacity-50"
             title={
               !workflow.lastRun
-                ? 'No outputs yet'
-                : workflow.lastRunStatus !== 'success'
-                  ? 'Last run failed'
-                  : 'View workflow outputs'
+                ? 'No execution history yet'
+                : 'View workflow execution history'
             }
           >
             <BarChart3 className="h-3.5 w-3.5 mr-1 transition-transform duration-200 group-hover:scale-110" />

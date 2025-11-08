@@ -44,7 +44,8 @@ export function ChatInputExecute({ fields, onExecute, executing = false, onReady
       await onExecute(values);
     } catch (error) {
       console.error('Execution error:', error);
-      toast.error('Failed to execute workflow');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to execute workflow';
+      toast.error(errorMessage);
     }
   }, [fields, values, onExecute]);
 

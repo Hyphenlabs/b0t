@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Play, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Play, Loader2, CheckCircle2, XCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { ChatTriggerConfig } from './trigger-configs/chat-trigger-config';
 import { WebhookTriggerConfig } from './trigger-configs/webhook-trigger-config';
@@ -98,6 +98,7 @@ export function WorkflowExecutionDialog({
       toast.success('Workflow executed successfully');
       onExecuted?.();
     } else if (progressState.status === 'failed') {
+      const errorMessage = progressState.error || 'Workflow execution failed';
       setExecutionResult({
         id: 'failed',
         status: 'error',
@@ -105,12 +106,12 @@ export function WorkflowExecutionDialog({
         completedAt: new Date().toISOString(),
         duration: 0,
         output: null,
-        error: progressState.error || 'Workflow execution failed',
+        error: errorMessage,
         errorStep: null,
         triggerType: 'manual',
       });
       setExecuting(false);
-      toast.error(progressState.error || 'Workflow execution failed');
+      toast.error(errorMessage);
     }
   }, [progressState.status, progressState.duration, progressState.output, progressState.error, onExecuted]);
 
@@ -278,24 +279,40 @@ export function WorkflowExecutionDialog({
                 </Button>
               )}
               {executionResult && (
-                <Button
-                  onClick={handleViewResults}
-                  className="flex-1 sm:flex-auto"
-                  size="lg"
-                  variant={executionResult.status === 'error' ? 'destructive' : 'default'}
-                >
-                  {executionResult.status === 'success' ? (
-                    <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      View Results
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="mr-2 h-4 w-4" />
-                      View Error
-                    </>
+                <>
+                  {executionResult.status === 'error' && executionResult.error && (
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(executionResult.error || '');
+                        toast.success('Error copied to clipboard');
+                      }}
+                      variant="outline"
+                      size="lg"
+                      className="flex-1 sm:flex-auto"
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy Error
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    onClick={handleViewResults}
+                    className="flex-1 sm:flex-auto"
+                    size="lg"
+                    variant={executionResult.status === 'error' ? 'destructive' : 'default'}
+                  >
+                    {executionResult.status === 'success' ? (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        View Results
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        View Error
+                      </>
+                    )}
+                  </Button>
+                </>
               )}
             </DialogFooter>
           )}
