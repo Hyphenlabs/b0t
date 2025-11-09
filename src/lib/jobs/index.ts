@@ -1,5 +1,6 @@
 import { scheduler, ScheduledJob } from '../scheduler';
 import { exampleEvery5Minutes, exampleHourly, exampleDaily } from './example';
+import { cleanupOAuthState } from './cleanup-oauth-state';
 import { logger } from '../logger';
 import { db } from '../db';
 import { appSettingsTable } from '../schema';
@@ -37,6 +38,14 @@ const jobs: ScheduledJob[] = [
     schedule: '0 0 * * *', // Every day at midnight
     task: exampleDaily,
     enabled: false, // Set to true to enable this example job
+  },
+
+  // Production jobs
+  {
+    name: 'cleanup-oauth-state',
+    schedule: '*/15 * * * *', // Every 15 minutes
+    task: cleanupOAuthState,
+    enabled: true,
   },
 
   // Add your custom scheduled jobs here
@@ -128,4 +137,5 @@ export {
   exampleEvery5Minutes,
   exampleHourly,
   exampleDaily,
+  cleanupOAuthState,
 };

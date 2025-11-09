@@ -11,7 +11,7 @@ const validateEncryptionKey = (): void => {
   const key = process.env.ENCRYPTION_KEY;
   const authSecret = process.env.AUTH_SECRET;
 
-  // Production: ENCRYPTION_KEY is required
+  // Production: ENCRYPTION_KEY is strictly required
   if (process.env.NODE_ENV === 'production') {
     if (!key) {
       throw new Error(
@@ -19,8 +19,8 @@ const validateEncryptionKey = (): void => {
       );
     }
     if (key === authSecret) {
-      logger.warn(
-        'ENCRYPTION_KEY and AUTH_SECRET are identical. Use separate keys for security.'
+      throw new Error(
+        'ENCRYPTION_KEY and AUTH_SECRET must be different for security. Generate separate keys.'
       );
     }
   }
