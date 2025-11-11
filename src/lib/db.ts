@@ -9,14 +9,17 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL environment variable is required. Make sure Docker PostgreSQL is running.');
 }
 
-logger.info(
-  {
-    action: 'db_connection_selected',
-    database: 'postgresql',
-    urlPreview: databaseUrl.substring(0, 30) + '...',
-  },
-  'Using PostgreSQL database'
-);
+// Only log in production or if explicitly requested
+if (process.env.NODE_ENV === 'production' || process.env.LOG_DB_CONFIG === 'true') {
+  logger.info(
+    {
+      action: 'db_connection_selected',
+      database: 'postgresql',
+      urlPreview: databaseUrl.substring(0, 30) + '...',
+    },
+    'Using PostgreSQL database'
+  );
+}
 
 // Configurable connection pool for scaling
 // Development: 20 connections (single instance)
@@ -35,17 +38,19 @@ const pool = new Pool({
   allowExitOnIdle: false, // Keep pool alive
 });
 
-// Log pool configuration
-logger.info(
-  {
-    action: 'db_pool_configured',
-    minConnections,
-    maxConnections,
-    connectionTimeoutMs,
-    idleTimeoutMs,
-  },
-  `Database pool configured: ${minConnections}-${maxConnections} connections`
-);
+// Only log in production or if explicitly requested
+if (process.env.NODE_ENV === 'production' || process.env.LOG_DB_CONFIG === 'true') {
+  logger.info(
+    {
+      action: 'db_pool_configured',
+      minConnections,
+      maxConnections,
+      connectionTimeoutMs,
+      idleTimeoutMs,
+    },
+    `Database pool configured: ${minConnections}-${maxConnections} connections`
+  );
+}
 
 // Pool error handling
 pool.on('error', (err) => {

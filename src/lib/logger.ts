@@ -100,22 +100,28 @@ if (isNodeRuntime) {
   }
 }
 
+// Custom formatter for cleaner dev logs
+// Note: We don't use pino-pretty transport in dev because it causes issues with Next.js/tsx
+// Instead, we keep the logs minimal by only logging essential info
+const prettyPrint = {};
+
 // Create logger with multiple streams (or single stream for Edge runtime)
 export const logger = isNodeRuntime && streams.length > 0
   ? pino(
       {
-        level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+        level: process.env.LOG_LEVEL || (isDevelopment ? 'info' : 'info'), // Changed debug to info
         formatters: {
           level: (label) => {
             return { level: label };
           },
         },
         timestamp: pino.stdTimeFunctions.isoTime,
+        ...prettyPrint,
       },
       pino.multistream(streams)
     )
   : pino({
-      level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+      level: process.env.LOG_LEVEL || (isDevelopment ? 'info' : 'info'), // Changed debug to info
       formatters: {
         level: (label) => {
           return { level: label };
@@ -125,6 +131,7 @@ export const logger = isNodeRuntime && streams.length > 0
       browser: {
         asObject: true,
       },
+      ...prettyPrint,
     });
 
 // Helper functions for common logging patterns

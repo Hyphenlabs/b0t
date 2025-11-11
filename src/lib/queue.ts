@@ -72,7 +72,10 @@ const createRedisConnection = (): Redis => {
 const getQueueRedisConnection = (): Redis => {
   if (!queueRedisConnection) {
     queueRedisConnection = createRedisConnection();
-    logger.info('Created queue Redis connection');
+    // Only log in production or if explicitly requested
+    if (process.env.NODE_ENV === 'production' || process.env.LOG_REDIS_CONFIG === 'true') {
+      logger.info('Created queue Redis connection');
+    }
   }
   return queueRedisConnection;
 };
@@ -81,7 +84,10 @@ const getQueueRedisConnection = (): Redis => {
 const getWorkerRedisConnection = (): Redis => {
   if (!workerRedisConnection) {
     workerRedisConnection = createRedisConnection();
-    logger.info('Created worker Redis connection');
+    // Only log in production or if explicitly requested
+    if (process.env.NODE_ENV === 'production' || process.env.LOG_REDIS_CONFIG === 'true') {
+      logger.info('Created worker Redis connection');
+    }
   }
   return workerRedisConnection;
 };

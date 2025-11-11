@@ -101,8 +101,11 @@ async function loadJobSettings(jobName: string): Promise<{ enabled?: boolean; in
  * Jobs will load their enabled state and schedule from the database if configured via UI.
  */
 export async function initializeScheduler() {
-  logger.info('Initializing job scheduler');
-  logger.info('Note: Workflow-based jobs are managed through the workflow system');
+  // Simplified logging for development
+  if (process.env.NODE_ENV !== 'development') {
+    logger.info('Initializing job scheduler');
+    logger.info('Note: Workflow-based jobs are managed through the workflow system');
+  }
 
   // Load settings from database for each job
   for (const job of jobs) {

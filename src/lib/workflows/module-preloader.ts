@@ -37,7 +37,15 @@ export async function preloadAllModules(): Promise<PreloadStats> {
   let successCount = 0;
   let failCount = 0;
 
-  logger.info('Starting module pre-loading...');
+  // Temporarily suppress console.warn during preload to hide missing API key warnings
+  const originalWarn = console.warn;
+  const originalLoggerWarn = logger.warn;
+
+  // Suppress warnings during preload
+  console.warn = () => {};
+  logger.warn = () => {};
+
+  console.log('🔄 Pre-loading modules...');
 
   // Build list of all module paths
   const modulePaths: string[] = [];
@@ -46,11 +54,6 @@ export async function preloadAllModules(): Promise<PreloadStats> {
       modulePaths.push(`${category.name}/${mod.name}`);
     }
   }
-
-  logger.info(
-    { totalModules: modulePaths.length },
-    `Pre-loading ${modulePaths.length} modules...`
-  );
 
   // Initialize status tracking
   updateSystemStatus({
@@ -99,6 +102,10 @@ export async function preloadAllModules(): Promise<PreloadStats> {
 
   const duration = Date.now() - startTime;
 
+  // Restore original warn functions
+  console.warn = originalWarn;
+  logger.warn = originalLoggerWarn;
+
   const stats: PreloadStats = {
     totalModules: modulePaths.length,
     successCount,
@@ -115,23 +122,9 @@ export async function preloadAllModules(): Promise<PreloadStats> {
   });
 
   if (failCount > 0) {
-    logger.warn(
-      {
-        successCount,
-        failCount,
-        duration,
-        errorCount: errors.length,
-      },
-      `Module pre-loading completed with ${failCount} failures in ${duration}ms`
-    );
+    console.log(`⚠️  Module pre-loading completed with ${failCount} failures`);
   } else {
-    logger.info(
-      {
-        totalModules: modulePaths.length,
-        duration,
-      },
-      `✅ Successfully pre-loaded all ${modulePaths.length} modules in ${duration}ms`
-    );
+    console.log(`✅ Pre-loaded ${modulePaths.length} modules (${duration}ms)`);
   }
 
   return stats;

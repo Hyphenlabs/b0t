@@ -56,10 +56,15 @@ export async function initializeWorkflowQueue(options?: {
   }
 
   try {
-    logger.info(
-      { concurrency, maxJobsPerMinute },
-      'Initializing workflow queue with concurrency settings'
-    );
+    // Simple console log for dev, structured log for production
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔄 Workflow queue ready (concurrency: ${concurrency})`);
+    } else {
+      logger.info(
+        { concurrency, maxJobsPerMinute },
+        'Initializing workflow queue with concurrency settings'
+      );
+    }
 
     // Create queue for workflow execution
     createQueue(WORKFLOW_QUEUE_NAME, {

@@ -35,9 +35,9 @@ echo "✅ Docker services running"
 echo ""
 echo "📊 Service URLs:"
 echo "   - App: http://localhost:3000"
-echo "   - PostgreSQL: localhost:5433 (postgres/postgres/social_cat_dev)"
+echo "   - PostgreSQL: localhost:5433 (postgres/postgres/b0t_dev)"
 echo "   - Redis: localhost:6379"
-echo "   - pgAdmin (optional): http://localhost:5050 (admin@social-cat.dev/admin)"
+echo "   - pgAdmin (optional): http://localhost:5050 (admin@b0t.dev/admin)"
 echo "   - Redis Commander (optional): http://localhost:8081"
 echo ""
 echo "💡 Tips:"
@@ -45,6 +45,12 @@ echo "   - Run 'docker compose --profile debug up -d' to start pgAdmin & Redis C
 echo "   - Run 'npm run db:studio' to open Drizzle Studio"
 echo ""
 echo "🌱 Seeding admin user..."
+# Load environment variables from .env.local before seeding
+if [ -f .env.local ]; then
+    set -a  # automatically export all variables
+    source .env.local
+    set +a  # stop automatically exporting
+fi
 npm run db:seed || true
 
 echo ""
