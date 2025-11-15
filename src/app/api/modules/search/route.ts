@@ -20,9 +20,9 @@ export async function GET(request: Request) {
 
     // Search through all categories and modules
     for (const category of registry) {
-      for (const module of category.modules) {
-        for (const func of module.functions) {
-          const modulePath = `${category.name}.${module.name}.${func.name}`;
+      for (const mod of category.modules) {
+        for (const func of mod.functions) {
+          const modulePath = `${category.name}.${mod.name}.${func.name}`;
           const searchText = `${modulePath} ${func.description} ${func.signature}`.toLowerCase();
 
           if (searchText.includes(query)) {
