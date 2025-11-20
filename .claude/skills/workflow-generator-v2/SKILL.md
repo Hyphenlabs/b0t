@@ -38,27 +38,33 @@ Use AskUserQuestion tool to gather:
 
 ## Step 2: Load Context Files
 
-**CRITICAL: Use Read tool to load these reference files:**
+**CRITICAL: Use Read tool to load these reference files in order:**
 
-**Always read (required):**
-1. `.claude/skills/workflow-generator-v2/references/common-modules.md`
-   - Module categories and search instructions
-   - Common patterns for JavaScript, AI, arrays, etc.
+**1. Always read (required - load ALL of these):**
+- `.claude/skills/workflow-generator-v2/references/yaml-format.md`
+  - Complete YAML structure specification
+  - Variable interpolation rules
+  - Output formats and returnValue
+  - Auto-wrapping explanation
 
-**Read based on trigger type (required):**
-2. Based on user's trigger choice:
-   - **Webhook** → `.claude/skills/workflow-generator-v2/references/webhook-trigger.md`
-   - **Chat** → `.claude/skills/workflow-generator-v2/references/chat-trigger.md`
-   - **Cron** → `.claude/skills/workflow-generator-v2/references/cron-trigger.md`
-   - **Manual** → `.claude/skills/workflow-generator-v2/references/manual-trigger.md`
+- `.claude/skills/workflow-generator-v2/references/common-modules.md`
+  - All 16 module categories
+  - Module search instructions
+  - Common module patterns
 
-These files contain:
-- Available trigger variables (webhook: trigger.body, chat: trigger.message, etc.)
-- Trigger configuration options
-- Complete working examples
-- Critical rules and patterns
+- `.claude/skills/workflow-generator-v2/references/common-mistakes.md`
+  - Top 10 mistakes and how to avoid them
+  - Rest parameters issue
+  - Variable naming errors
+  - YAML syntax gotchas
 
-**Do NOT proceed without reading BOTH files!**
+**2. Read based on trigger type (required - load ONE):**
+- **Webhook** → `.claude/skills/workflow-generator-v2/references/webhook-trigger.md`
+- **Chat** → `.claude/skills/workflow-generator-v2/references/chat-trigger.md`
+- **Cron** → `.claude/skills/workflow-generator-v2/references/cron-trigger.md`
+- **Manual** → `.claude/skills/workflow-generator-v2/references/manual-trigger.md`
+
+**Do NOT proceed without reading ALL FOUR files!**
 
 ## Step 3: Search for Specific Modules
 
