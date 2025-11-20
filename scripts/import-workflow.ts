@@ -12,9 +12,11 @@
 
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { execSync } from 'child_process';
 import { type WorkflowExport } from '../src/lib/workflows/import-export';
 
 const API_URL = process.env.API_URL || 'http://localhost:3123';
+const PORT = API_URL.split(':').pop() || '3123';
 
 async function checkServerRunning(): Promise<boolean> {
   try {
@@ -25,6 +27,35 @@ async function checkServerRunning(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+function killServerOnPort(): void {
+  try {
+    execSync(`lsof -i:${PORT} | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null`, {
+      stdio: 'ignore',
+    });
+  } catch {
+    // Server wasn't running, that's fine
+  }
+}
+
+function startServer(): void {
+  console.log('🚀 Starting development server...');
+  // Start server in background using spawn would be better, but execSync is simpler
+  // User will need to manually manage the background process
+  console.log('💡 Run this in another terminal: npm run dev:full');
+  console.log('   Or the script will attempt to continue...');
+}
+
+async function waitForServer(maxWaitSeconds: number = 30): Promise<boolean> {
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitSeconds * 1000) {
+    if (await checkServerRunning()) {
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  return false;
 }
 
 async function importWorkflow(workflowJson: string): Promise<void> {
@@ -40,15 +71,22 @@ async function importWorkflow(workflowJson: string): Promise<void> {
       console.log(`🔑 Required credentials: ${workflow.metadata.requiresCredentials.join(', ')}`);
     }
 
-    // Check if server is running
+    // Check if server is running, restart if needed
     console.log('\n🔍 Checking if server is running...');
-    const serverRunning = await checkServerRunning();
+    let serverRunning = await checkServerRunning();
 
     if (!serverRunning) {
-      console.error(`❌ Server not responding at ${API_URL}`);
-      console.error(`   Please start the server first: npm run dev:full`);
-      console.error(`   Or set API_URL environment variable to point to running server`);
-      process.exit(1);
+      console.log('⚠️  Server not running, starting it...');
+      killServerOnPort(); // Kill any stale processes
+      startServer();
+      console.log('⏳ Waiting for server to be ready...');
+      serverRunning = await waitForServer(30);
+
+      if (!serverRunning) {
+        console.error(`❌ Server failed to start within 30 seconds`);
+        console.error(`   Try starting manually: npm run dev:full`);
+        process.exit(1);
+      }
     }
 
     console.log(`✅ Server is running at ${API_URL}\n`);
@@ -58,12 +96,51 @@ async function importWorkflow(workflowJson: string): Promise<void> {
       ? `${API_URL}/api/workflows/import`
       : `${API_URL}/api/workflows/import-test`;
 
-    const response = await fetch(importEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workflowJson }),
-      signal: AbortSignal.timeout(30000), // 30 second timeout
-    });
+    let response: Response | undefined;
+    let importAttempt = 1;
+    const maxAttempts = 2;
+
+    while (importAttempt <= maxAttempts) {
+      try {
+        console.log(`📤 Import attempt ${importAttempt}/${maxAttempts}...`);
+
+        response = await fetch(importEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workflowJson }),
+          signal: AbortSignal.timeout(10000), // 10 second timeout
+        });
+
+        break; // Success, exit loop
+      } catch (error) {
+        if (error instanceof Error && error.name === 'TimeoutError' && importAttempt < maxAttempts) {
+          console.log('⚠️  Import taking too long (>10s), server might be frozen');
+          console.log('🔄 Killing frozen server and retrying...');
+
+          killServerOnPort();
+          await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3s for cleanup
+
+          console.log('💡 Please restart server manually: npm run dev:full');
+          console.log('⏳ Waiting 30s for server...');
+          const restarted = await waitForServer(30);
+
+          if (!restarted) {
+            console.error('❌ Server not available after restart attempt');
+            console.error('   Please start server manually and re-run import');
+            process.exit(1);
+          }
+
+          importAttempt++;
+        } else {
+          throw error; // Re-throw non-timeout errors
+        }
+      }
+    }
+
+    if (!response) {
+      console.error('❌ Import failed after all attempts');
+      process.exit(1);
+    }
 
     if (!response.ok) {
       const error = await response.json();
